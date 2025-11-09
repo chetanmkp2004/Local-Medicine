@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/app_providers.dart';
+import '../../core/config.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
   final String? initialQuery;
@@ -304,6 +305,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
     return Column(
       children: [
+        // Environment banner (backend + AI) for clarity in non-release or when overridden.
+        _EnvironmentBanner(),
         Container(
           margin: EdgeInsets.all(isWide ? 24.0 : 16.0),
           child: SearchBar(
@@ -564,5 +567,88 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+}
+
+/// Small pinned banner showing which backend & AI service the app is talking to.
+/// Helps during debugging and when switching between local, LAN, and hosted services.
+class _EnvironmentBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final backend = ApiConfig.baseUrl;
+    final ai = ApiConfig.aiBaseUrl;
+    final isRelease = bool.fromEnvironment('dart.vm.product');
+
+    // Hide banner in pure release mode unless user provided explicit overrides.
+    final hasOverride =
+        const String.fromEnvironment('BACKEND_BASE_URL').isNotEmpty ||
+        const String.fromEnvironment('AI_BASE_URL').isNotEmpty;
+    if (isRelease && !hasOverride) return const SizedBox.shrink();
+
+    Color pickColor(String url) {
+      if (url.contains('hf.space'))
+        return const Color(0xFF2563EB); // Production (blue)
+      if (url.contains('10.0.2.2') || url.contains('localhost'))
+        return const Color(0xFF6B7280); // Local (gray)
+      return const Color(0xFFF59E0B); // LAN / custom (amber)
+    }
+
+    Widget pill(String label, String url) {
+      final color = pickColor(url);
+      return Container(
+        margin: const EdgeInsets.only(right: 8, bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              label == 'Backend' ? Icons.cloud_outlined : Icons.auto_awesome,
+              size: 14,
+              color: color,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                url.replaceAll(RegExp(r'^https?://'), ''),
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: color.withValues(alpha: 0.85),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 12, right: 12, top: 8),
+          child: Wrap(
+            runSpacing: 4,
+            children: [pill('Backend', backend), pill('AI', ai)],
+          ),
+        ),
+      ),
+    );
   }
 }
