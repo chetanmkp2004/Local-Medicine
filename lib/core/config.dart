@@ -1,5 +1,5 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 
 /// API configuration with platform-aware base URLs.
 class ApiConfig {
@@ -13,9 +13,22 @@ class ApiConfig {
     defaultValue: '',
   );
 
+  // Production hosted URLs (Hugging Face Spaces)
+  // Update these constants if your Space name changes
+  static const String _prodBackendBase =
+      'https://chetan2710-local-medicine.hf.space';
+  // If you deploy the AI service separately, set this at build time via --dart-define=AI_BASE_URL
+  static const String _prodAiBase = String.fromEnvironment(
+    'PRODUCTION_AI_URL',
+    defaultValue: '',
+  );
+
   /// Resolve backend base URL depending on platform and env overrides.
   static String get baseUrl {
     if (_envBackendBase.isNotEmpty) return _envBackendBase;
+
+    // In release builds default to the hosted backend
+    if (kReleaseMode) return _prodBackendBase;
 
     if (kIsWeb) {
       // Use the same host the app is served from; default port 8000
@@ -58,6 +71,9 @@ class ApiConfig {
   static String get aiBaseUrl {
     if (_envAiBase.isNotEmpty) return _envAiBase;
 
+    // In release builds, use provided production AI URL if set
+    if (kReleaseMode && _prodAiBase.isNotEmpty) return _prodAiBase;
+
     if (kIsWeb) {
       final host = Uri.base.host.isEmpty ? 'localhost' : Uri.base.host;
       final port = 8001;
@@ -67,9 +83,10 @@ class ApiConfig {
     try {
       if (Platform.isAndroid) {
         // Check if emulator vs physical device
-        final isEmulator = Platform.environment['ANDROID_EMULATOR'] == 'true' ||
-                          Platform.localHostname.contains('localhost');
-        
+        final isEmulator =
+            Platform.environment['ANDROID_EMULATOR'] == 'true' ||
+            Platform.localHostname.contains('localhost');
+
         if (isEmulator) {
           return 'http://10.0.2.2:8001';
         } else {
