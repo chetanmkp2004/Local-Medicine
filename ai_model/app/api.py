@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import sys
@@ -21,6 +22,15 @@ except ImportError:
 from utils.translator_lite import TranslatorService
 
 app = FastAPI(title="Local Medicine AI Service", version="1.0.0")
+
+# Allow all origins for simplicity (Flutter Web / mobile). Adjust in production if needed.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 translator = TranslatorService()
 predictor = MedicinePredictor()

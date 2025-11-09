@@ -42,6 +42,15 @@ final aiServiceProvider = Provider((ref) {
   return AiService();
 });
 
+/// AI health check provider
+/// - true: healthy
+/// - false: unhealthy or unreachable
+/// Auto-disposes to keep it lightweight; UI can refresh on demand.
+final aiHealthProvider = FutureProvider.autoDispose<bool>((ref) async {
+  final ai = ref.watch(aiServiceProvider);
+  return ai.health();
+});
+
 // Auth state
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final authService = ref.watch(authServiceProvider);

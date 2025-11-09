@@ -572,9 +572,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
 /// Small pinned banner showing which backend & AI service the app is talking to.
 /// Helps during debugging and when switching between local, LAN, and hosted services.
-class _EnvironmentBanner extends StatelessWidget {
+class _EnvironmentBanner extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final backend = ApiConfig.baseUrl;
     final ai = ApiConfig.aiBaseUrl;
     final isRelease = bool.fromEnvironment('dart.vm.product');
@@ -593,7 +593,7 @@ class _EnvironmentBanner extends StatelessWidget {
       return const Color(0xFFF59E0B); // LAN / custom (amber)
     }
 
-    Widget pill(String label, String url) {
+    Widget pill(String label, String url, {Widget? trailing}) {
       final color = pickColor(url);
       return Container(
         margin: const EdgeInsets.only(right: 8, bottom: 6),
@@ -632,10 +632,25 @@ class _EnvironmentBanner extends StatelessWidget {
                 ),
               ),
             ),
+            if (trailing != null) ...[
+              const SizedBox(width: 6),
+              trailing,
+            ],
           ],
         ),
       );
     }
+
+    // AI Health indicator LED
+    final aiHealth = ref.watch(aiHealthProvider);
+    final aiIndicator = aiHealth.when(
+      data: (ok) => _LedDot(
+        color: ok ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+        tooltip: ok ? 'AI: Healthy' : 'AI: Unreachable',
+      ),
+      loading: () => const _LedDot(color: Color(0xFFF59E0B), tooltip: 'AI: Checking...'),
+      error: (e, _) => const _LedDot(color: Color(0xFFDC2626), tooltip: 'AI: Error'),
+    );
 
     return Material(
       color: Colors.transparent,
@@ -645,8 +660,43 @@ class _EnvironmentBanner extends StatelessWidget {
           padding: const EdgeInsets.only(left: 12, right: 12, top: 8),
           child: Wrap(
             runSpacing: 4,
-            children: [pill('Backend', backend), pill('AI', ai)],
+            children: [
+              pill('Backend', backend),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => ref.invalidate(aiHealthProvider),
+                child: pill('AI', ai, trailing: aiIndicator),
+              ),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LedDot extends StatelessWidget {
+  final Color color;
+  final String tooltip;
+  const _LedDot({required this.color, required this.tooltip});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.45),
+              blurRadius: 6,
+              spreadRadius: 0.5,
+            ),
+          ],
         ),
       ),
     );
