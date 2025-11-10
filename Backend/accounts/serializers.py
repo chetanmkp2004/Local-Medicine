@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
+from django.db import IntegrityError
 from django.contrib.auth import authenticate
 from .models import User, DeviceToken
 
@@ -16,6 +18,14 @@ class RegisterSerializer(serializers.ModelSerializer):
     """Serializer for user registration"""
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
+    email = serializers.EmailField(
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all(), message="Email already in use")],
+    )
+    phone = serializers.CharField(
+        required=False, allow_null=True, allow_blank=True,
+        validators=[UniqueValidator(queryset=User.objects.all(), message="Phone already in use")],
+    )
     
     class Meta:
         model = User
@@ -28,8 +38,17 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         validated_data.pop('password_confirm')
-        user = User.objects.create_user(**validated_data)
-        return user
+        try:
+            user = User.objects.create_user(**validated_data)
+            return user
+        except IntegrityError as e:
+            # Fallback in case DB-level unique constraint triggers despite validators
+            msg = str(e).lower()
+            if 'email' in msg:
+                raise serializers.ValidationError({'email': 'Email already in use'})
+            if 'phone' in msg:
+                raise serializers.ValidationError({'phone': 'Phone already in use'})
+            raise serializers.ValidationError({'detail': 'Registration failed due to a server error.'})
 
 
 class LoginSerializer(serializers.Serializer):
