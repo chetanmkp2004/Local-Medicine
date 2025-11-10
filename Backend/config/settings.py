@@ -17,6 +17,8 @@ ALLOWED_HOSTS = config(
     default='localhost,127.0.0.1,0.0.0.0,192.168.29.91,10.0.2.2,10.32.12.173,chetan2710-local-medicine.hf.space,.hf.space'
 ).split(',')
 
+# Disable automatic slash appending to avoid POST body loss on redirect
+APPEND_SLASH = False
 
 # Application definition
 
