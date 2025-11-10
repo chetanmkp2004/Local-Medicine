@@ -68,8 +68,9 @@ class AiService {
 
   Future<bool> health() async {
     try {
-      debugPrint('🏥 Checking AI health at ${ApiConfig.aiBaseUrl}/health');
-      final res = await _dio.get('health');
+  debugPrint('🏥 Checking AI health at ${ApiConfig.aiBaseUrl}/health');
+  // Use absolute-path resolution to avoid baseUrl concatenation issues
+  final res = await _dio.get('/health');
       debugPrint('✅ AI health OK: ${res.data}');
       return (res.data is Map && res.data['status'] == 'ok');
     } catch (e) {
@@ -83,7 +84,7 @@ class AiService {
     debugPrint('   AI Base URL: ${ApiConfig.aiBaseUrl}');
 
     final res = await _dio.post(
-      'predict_medicine',
+      '/predict_medicine',
       data: {'symptoms': symptoms},
       options: Options(headers: {'Content-Type': 'application/json'}),
     );

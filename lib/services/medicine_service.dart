@@ -15,9 +15,11 @@ class MedicineService {
       'medicines/search',
       queryParameters: {'q': query, 'limit': limit, 'offset': offset},
     );
-    return (response.data as List)
-        .map((e) => MedicineRead.fromJson(e))
-        .toList();
+    final data = response.data;
+    final list = data is Map<String, dynamic>
+        ? (data['results'] as List? ?? const [])
+        : (data is List ? data : const []);
+    return list.map((e) => MedicineRead.fromJson(e)).toList();
   }
 
   Future<MedicineRead> createMedicine({
