@@ -110,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Password Hashing - use PBKDF2 (reliable, no extra deps)
-# Argon2 is preferred but requires argon2-cffi build; if Space build fails, PBKDF2 is still secure.
+# Updated 2025-11-12: PBKDF2 only, no Argon2 dependency for Hugging Face deployment
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
