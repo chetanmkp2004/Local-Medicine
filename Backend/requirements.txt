@@ -9,4 +9,4 @@ Pillow>=11.0.0      ; python_version >= "3.13"
 gunicorn==21.2.0
 whitenoise==6.5.0
 drf-spectacular==0.27.2
-argon2-cffi==23.1.0
+# argon2-cffi removed - using PBKDF2PasswordHasher instead (no build dependencies)
