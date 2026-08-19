@@ -1,6 +1,6 @@
 """Transaction ORM model."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -17,4 +17,4 @@ class Transaction(Base):
     user_id: Mapped[str] = mapped_column(String(64), index=True)
     description: Mapped[str] = mapped_column(String(255))
     amount: Mapped[float] = mapped_column(Float)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))

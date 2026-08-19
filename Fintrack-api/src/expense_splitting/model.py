@@ -1,6 +1,6 @@
 """ORM models for shared expenses and participants."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
@@ -26,7 +26,7 @@ class SharedExpense(Base):
     description: Mapped[str] = mapped_column(String(255))
     total_amount: Mapped[float] = mapped_column(Float)
     split_type: Mapped[str] = mapped_column(String(20))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
 
     participants: Mapped[list["ExpenseParticipant"]] = relationship(
         back_populates="expense",
