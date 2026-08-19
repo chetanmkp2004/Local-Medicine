@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +102,7 @@ public class ExpenseSplittingService {
                     }
                     return new BalanceSummaryResponse(e.getKey(), "YOU_OWE", net.abs());
                 })
+                .sorted(Comparator.comparing(BalanceSummaryResponse::counterpartUserId))
                 .toList();
 
         return new PendingBalancesResponse(userId, balances);

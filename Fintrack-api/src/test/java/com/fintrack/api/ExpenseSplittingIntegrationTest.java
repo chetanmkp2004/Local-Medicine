@@ -117,6 +117,22 @@ class ExpenseSplittingIntegrationTest {
                 .andExpect(jsonPath("$.error").value("Unauthorized access to another user's data"));
     }
 
+    @Test
+    void equalSplitWithRemainderKeepsRoundedTotalsAndSortedBalances() throws Exception {
+        createExpense("u1", "Groceries", "100.00", "EQUAL", List.of(
+                participant("u1", null), participant("u3", null), participant("u2", null)
+        ));
+
+        mockMvc.perform(get("/api/users/u1/balances").header("X-User-Id", "u1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balances[0].counterpartUserId").value("u2"))
+                .andExpect(jsonPath("$.balances[0].direction").value("OWED_TO_YOU"))
+                .andExpect(jsonPath("$.balances[0].amount").value(33.33))
+                .andExpect(jsonPath("$.balances[1].counterpartUserId").value("u3"))
+                .andExpect(jsonPath("$.balances[1].direction").value("OWED_TO_YOU"))
+                .andExpect(jsonPath("$.balances[1].amount").value(33.33));
+    }
+
     private void createExpense(String creator, String description, String total, String splitType, List<Map<String, Object>> participants) throws Exception {
         mockMvc.perform(post("/api/expenses")
                         .header("X-User-Id", creator)
